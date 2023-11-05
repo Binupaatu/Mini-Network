@@ -1,0 +1,29 @@
+---
+# Base template for EC2
+Resources:
+  TestInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      AvailabilityZone: eu-west-1a
+      ImageId: ami-08f32efd140b7d89f
+      InstanceType: t2.micro
+      Tags:
+        - Key: DevTestStage
+          Value: DevTest
+Resources:
+  ATUClds3:
+    Type: AWS::S3::Bucket
+    Properties:
+      AccessControl: "PublicRead"
+      BucketName: "CldDemoS3"
+ #bucketnames are lowercase
+      Tags:
+      - Key: "cldS3Demo"
+        Value: "CldS3"
+Outputs:
+  # Export EC2
+  OutTestEC2:
+    Description: EC2 Instance  
+    Value: !Ref TestInstance
+    Export:
+      Name: TestInstanceEC2
