@@ -1,0 +1,171 @@
+AWSTemplateFormatVersion: '2010-09-09'
+
+Description: 'Creating VPC with Piblic and private subnets'
+Metadata:
+Parameters:
+  VpcCIDR:
+    Default: 10.100.0.0/16
+    Type: String
+  PublicSubnet1CIDR:
+    Default: 10.100.0.0/24
+    Description: IP Range for public subnet1
+    Type: String
+  PublicSubnet2CIDR:
+    Default: 10.100.2.0/24
+    Description: IP Range for public subnet2
+    Type: Stringc
+  PrivateSubnet1CIDR:
+    Default: 10.100.3.0/24
+    Description: IP Range for private subnet1
+    Type: String
+  PrivateSubnet2CIDR:
+    Default: 10.100.4.0/24
+    Description: IP Range for private subnet1
+    Type: String
+  SSHLocation:
+    AllowedPattern: '(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})'
+    ConstraintDescription: must be a valid IP CIDR range of the form x.x.x.x/x.
+    Default: 0.0.0.0/0
+    Description: The IP address range that can be used to access the web server using SSH.
+    MaxLength: '18'
+    MinLength: '9'
+    Type: String
+Resources:
+  VPCMini:
+      Type: AWS::EC2::VPC
+      Properties:
+        CidrBlock: !Ref VpcCIDR
+        EnableDnsHostnames: true  
+        EnableDnsSupport: true
+        InstanceTenancy: default
+        Tags: 
+        - Key: Name
+          Value: MiniNWVPC
+  InternetGateway:    
+      Type: AWS::EC2::InternetGateway
+      Properties:
+        Tags: 
+        - Key: IGWName
+          Value: MiniNWIGW
+  InternetgatewayAttachment:
+      Type: AWS::EC2::VPCGatewayAttachment
+      Properties:
+        InternetGatewayId: !Ref InternetGateway
+        VpcId: !Ref VPCMini
+
+  #Public Subnet
+  PublicSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:  
+      AvailabilityZone: eu-west-1b
+      AvailabilityZoneId: euw1-az3
+      CidrBlock: !Ref PublicSubnet1CIDR
+      MapPublicIpOnLaunch: true
+      OutpostArn: String
+      Tags: 
+        - Key: Name
+          Value: PubSub1EC2
+      VpcId: !Ref VPCMini
+
+  PublicSubnet2:
+   Type: AWS::EC2::Subnet
+    Properties:  
+      AvailabilityZone: eu-west-1c
+      AvailabilityZoneId: euw1-az1
+      CidrBlock: !Ref PublicSubnet2CIDR
+      MapPublicIpOnLaunch: true
+      OutpostArn: String
+      Tags: 
+        - Key: Name
+          Value: PubSub2EC2
+      VpcId: !Ref VPCMini
+  #Public Subnet Rote table
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      Tags: 
+        - Key: Name
+          Value: Public Route Table MiniNw
+      VpcId: !Ref VPCMini
+
+  PublicRoute:
+    Type: AWS::EC2::Route
+    Properties:
+      DestinationCidrBlock: 0.0.0.0/10  
+      GatewayId: !Ref Internetgateway
+      RouteTableId: !Ref PublicRouteTable
+
+  PublicSubnet1RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      SubnetId: !Ref PublicSubnet1
+
+
+  PublicSubnet2RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      SubnetId: !Ref PublicSubnet2
+
+  #Private Subnet
+  PrivateSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties: 
+      AvailabilityZone: eu-west-1c
+      AvailabilityZoneId: euw1-az1
+      CidrBlock: !Ref PrivateSubnet1CIDR
+      MapPublicIpOnLaunch: false
+      OutpostArn: String
+      Tags: 
+        - Key: Name
+          Value: PvtSub1EC2
+      VpcId: !Ref VPCMini
+
+  PrivateSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:  
+      AvailabilityZone: eu-west-1b
+      AvailabilityZoneId: euw1-az3
+      CidrBlock: !Ref PrivateSubnet2CIDR
+      MapPublicIpOnLaunch: false
+      OutpostArn: String
+      Tags: 
+      - Key: Name
+        Value: PvtSub1EC2
+      VpcId: !Ref VPCMini
+  #Security Group
+  InstanceSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: "Allow http to client host"
+      VpcId: !Ref VPCMini
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+      SecurityGroupEgress:
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key:Name
+          Value: "App Load balancer secgroup"
+    
+    SSHSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: "SSH SecGroup"
+      VpcId: !Ref VPCMini
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: !Ref SSHLocation
+      Tags:
+        - Key:Name
+          Value: "SSH secgroup"
+
+
