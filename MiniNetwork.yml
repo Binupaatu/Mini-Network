@@ -134,38 +134,4 @@ Resources:
       - Key: Name
         Value: PvtSub1EC2
       VpcId: !Ref VPCMini
-  #Security Group
-  InstanceSecurityGroup:
-    Type: AWS::EC2::SecurityGroup
-    Properties:
-      GroupDescription: "Allow http to client host"
-      VpcId: !Ref VPCMini
-      SecurityGroupIngress:
-        - IpProtocol: tcp
-          FromPort: 80
-          ToPort: 80
-          CidrIp: 0.0.0.0/0
-      SecurityGroupEgress:
-        - IpProtocol: tcp
-          FromPort: 443
-          ToPort: 443
-          CidrIp: 0.0.0.0/0
-      Tags:
-        - Key:Name
-          Value: "App Load balancer secgroup"
-    
-    SSHSecurityGroup:
-    Type: AWS::EC2::SecurityGroup
-    Properties:
-      GroupDescription: "SSH SecGroup"
-      VpcId: !Ref VPCMini
-      SecurityGroupIngress:
-        - IpProtocol: tcp
-          FromPort: 22
-          ToPort: 22
-          CidrIp: !Ref SSHLocation
-      Tags:
-        - Key:Name
-          Value: "SSH secgroup"
-
-
+  
