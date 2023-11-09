@@ -94,3 +94,9 @@ Resources:
     Properties:
       RouteTableId: !Ref PublicRouteTable
       SubnetId: !Ref PublicSubnet1
+Outputs:
+  VPC:
+    Description: VPC ID
+    Value: !Ref VPCMiniA 
+    Export:
+      Name: !Sub '${AWS::StackName}-VPCID'
