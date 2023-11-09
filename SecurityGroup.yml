@@ -18,7 +18,7 @@
         - Key:Name
           Value: "App Load balancer secgroup"
     
-    SSHSecurityGroup:
+  SSHSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupDescription: "SSH SecGroup"
