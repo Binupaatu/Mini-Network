@@ -1,9 +1,20 @@
+Parameters:
+  SSHLocation:
+    AllowedPattern: '(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})'
+    ConstraintDescription: must be a valid IP CIDR range of the form x.x.x.x/x.
+    Default: 0.0.0.0/0
+    Description: The IP address range that can be used to access the web server using SSH.
+    MaxLength: '18'
+    MinLength: '9'
+    Type: String
+
+Resources:     
  #Security Group
   InstanceSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupDescription: "Allow http to client host"
-      VpcId: !Ref VPCMini
+      VpcId: vpc-072041a3ddb1f000c
       SecurityGroupIngress:
         - IpProtocol: tcp
           FromPort: 80
@@ -15,21 +26,32 @@
           ToPort: 443
           CidrIp: 0.0.0.0/0
       Tags:
-        - Key:Name
+        - Key: Name
           Value: "App Load balancer secgroup"
     
   SSHSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupDescription: "SSH SecGroup"
-      VpcId: !Ref VPCMini
+      VpcId: vpc-072041a3ddb1f000c
       SecurityGroupIngress:
         - IpProtocol: tcp
           FromPort: 22
           ToPort: 22
           CidrIp: !Ref SSHLocation
       Tags:
-        - Key:Name
+        - Key: Name
           Value: "SSH secgroup"
+
+  VPCAPubEC2SecurityGroup:    
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: VPCA Public Security Group 
+      GroupName: SG-VPCAPublicEC2
+      SecurityGroupIngress: 
+      - IpProtocol: tcp
+        FromPort: 22
+        ToPort: 22
+        CidrIp: 0.0.0.0/0 
 
 
