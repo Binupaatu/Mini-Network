@@ -7,51 +7,29 @@ Parameters:
     MaxLength: '18'
     MinLength: '9'
     Type: String
-
-Resources:     
- #Security Group
-  InstanceSecurityGroup:
-    Type: AWS::EC2::SecurityGroup
-    Properties:
-      GroupDescription: "Allow http to client host"
-      VpcId: vpc-072041a3ddb1f000c
-      SecurityGroupIngress:
-        - IpProtocol: tcp
-          FromPort: 80
-          ToPort: 80
-          CidrIp: 0.0.0.0/0
-      SecurityGroupEgress:
-        - IpProtocol: tcp
-          FromPort: 443
-          ToPort: 443
-          CidrIp: 0.0.0.0/0
-      Tags:
-        - Key: Name
-          Value: "App Load balancer secgroup"
-    
-  SSHSecurityGroup:
-    Type: AWS::EC2::SecurityGroup
-    Properties:
-      GroupDescription: "SSH SecGroup"
-      VpcId: vpc-072041a3ddb1f000c
-      SecurityGroupIngress:
+  myVPC:
+    Description: The ID of the VPC
+    Type: String
+    Default: vpc-02f1373cb2b8507df
+Resources:
+  EC2PrivateSecurityGroup:
+      Type: AWS::EC2::SecurityGroup
+      Properties:
+        GroupDescription: EC2 VPCA Private Subnet
+        VpcId: !Ref myVPC
+        SecurityGroupIngress:
         - IpProtocol: tcp
           FromPort: 22
           ToPort: 22
-          CidrIp: !Ref SSHLocation
-      Tags:
-        - Key: Name
-          Value: "SSH secgroup"
+          CidrIp: 10.100.0.0/24   
 
-  VPCAPubEC2SecurityGroup:    
+  EC2PublicSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupDescription: VPCA Public Security Group 
-      GroupName: SG-VPCAPublicEC2
-      SecurityGroupIngress: 
+      GroupDescription: EC2 VPCA Public Subnet
+      VpcId: !Ref myVPC    
+      SecurityGroupIngress:
       - IpProtocol: tcp
         FromPort: 22
         ToPort: 22
-        CidrIp: 0.0.0.0/0 
-
-
+        CidrIp: !Ref SSHLocation
