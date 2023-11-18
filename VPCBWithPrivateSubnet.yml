@@ -1,0 +1,68 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Creating VPC with private subnets'
+Parameters:
+  VpcCIDR:
+    Default: 100.200.0.0/16
+    Type: String 
+  PrivateSubnet1CIDR:
+    Default: 100.200.1.0/24
+    Description: IP Range for private subnet1
+    Type: String
+    
+Resources:
+  VPCMiniB:
+      Type: AWS::EC2::VPC
+      Properties:
+        CidrBlock: !Ref VpcCIDR
+        EnableDnsHostnames: true  
+        EnableDnsSupport: true
+        InstanceTenancy: default
+        Tags: 
+        - Key: Name
+          Value: MiniNWVPCB
+
+  #Public Subnet
+  PrivateSubnet:
+    Type: AWS::EC2::Subnet
+    Properties: 
+      AvailabilityZone: !Select [ 2, !GetAZs '' ]
+      CidrBlock: !Ref PrivateSubnet1CIDR
+      MapPublicIpOnLaunch: false
+      Tags: 
+        - Key: Name
+          Value: PvtSub1VPCMiniB
+      VpcId: !Ref VPCMiniB
+      
+  #Public Subnet Rote table
+  PrivateRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      Tags: 
+        - Key: Name
+          Value: Private Route Table MiniNw
+      VpcId: !Ref VPCMiniB
+
+  PrivateSubnet1RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable
+      SubnetId: !Ref PrivateSubnet     
+
+Outputs:
+  VPC:
+    Description: VPC ID
+    Value: !Ref VPCMiniB 
+    Export:
+      Name: !Sub '${AWS::StackName}-VPCID'
+  PrivateSubnet:
+    Description: The subnet ID to use for private web servers
+    Value: !Ref PrivateSubnet
+    Export:
+      Name:
+        'Fn::Sub': '${AWS::StackName}-SubnetID'
+  PrivateRouteTable:
+    Description: Private Route Table ID
+    Value: !Ref PrivateRouteTable
+    Export:
+      Name:
+        'Fn::Sub': '${AWS::StackName}-PrivateRouteTable'

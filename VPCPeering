@@ -1,0 +1,43 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Creating VPCA to VPCB Peering'
+Parameters:
+  ExportVPCA:
+    Description: The name of the First stack that exports values
+    Type: String  
+  ExportVPCB:
+    Description: The name of the Second stack that exports values
+    Type: String  
+Resources:
+  vpcPeeringConnection:
+    Type: AWS::EC2::VPCPeeringConnection
+    Properties:
+      VpcId: 
+        Fn::ImportValue: !Sub ${ExportVPCA}-VPCID
+      PeerVpcId: 
+        Fn::ImportValue: !Sub ${ExportVPCB}-VPCID  
+      Tags:
+      - Key: Name
+        Value: VPCA-VPCB-peering
+
+  PrivateRouteVPCA:
+    Type: AWS::EC2::Route
+    Properties:
+      DestinationCidrBlock: 100.200.1.0/24 
+      VpcPeeringConnectionId: !Ref vpcPeeringConnection
+      RouteTableId: 
+        Fn::ImportValue: !Sub ${ExportVPCA}-PrivateRouteTable
+        
+  PrivateRouteVPCB:
+    Type: AWS::EC2::Route
+    Properties:
+      DestinationCidrBlock: 100.100.1.0/24 
+      VpcPeeringConnectionId: !Ref vpcPeeringConnection
+      RouteTableId: 
+        Fn::ImportValue: !Sub ${ExportVPCB}-PrivateRouteTable
+
+Outputs:
+  VPCPeering:
+    Description: VPC Peering ID
+    Value: !Ref vpcPeeringConnection 
+    Export:
+      Name: !Sub '${AWS::StackName}-VPCPeering'

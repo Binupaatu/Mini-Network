@@ -1,0 +1,45 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Creating EC2 instance and security Groups'
+Parameters:
+  ExportVPC:
+    Description: The name of the vpc stack that exports values
+    Type: String  
+
+Resources:
+  VPCBPrivateEC2:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: ami-08f32efd140b7d89f
+      InstanceType: t2.micro  
+      KeyName: L00179364      
+      AvailabilityZone: !Select [ 2, !GetAZs '' ]
+      Tags:
+      - Key: Name
+        Value: VPCBPrivateEC2            
+      SubnetId: 
+        Fn::ImportValue: !Sub ${ExportVPC}-SubnetID
+      SecurityGroupIds:
+        - !GetAtt EC2PrivateSecurityGroup.GroupId
+
+  EC2PrivateSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: EC2 VPCB Private Subnet
+      VpcId: 
+        Fn::ImportValue: !Sub ${ExportVPC}-VPCID        
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: 22
+        ToPort: 22
+        CidrIp: 100.100.1.0/24   
+      - IpProtocol: ICMP
+        FromPort: -1
+        ToPort: -1 
+        CidrIp: 100.100.1.0/24      
+Outputs:
+  EC2:
+    Description: EC2
+    Value: !Ref VPCBPrivateEC2 
+    Export:
+      Name: !Sub '${AWS::StackName}-VPCBPrivateEC2'
+

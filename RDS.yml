@@ -1,0 +1,141 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: This template creates an RDS database with MYSQL
+
+Metadata:
+  AWS::CloudFormation::Interface: 
+    ParameterGroups:
+      -
+        Label: 
+          default: Export Second VPC Stack Name
+        Parameters:
+          - ExportVPCB
+      - 
+        Label: 
+          default: Database Parameters
+        Parameters:
+          - DatabaseInstanceIdentifier
+          - DatabaseName
+          - DatabaseUser
+          - DatabasePassword
+          - DatabaseBackupRetentionPeriod
+          - DatabaseAllocatedStorage
+          - DatabaseInstanceClass
+          - MultiAZDatabase
+
+Parameters:
+  ExportVPCB:
+    Description: The name of the second vpc stack that exports values
+    Type: String
+
+  PrivateSubnet2CIDR:
+    Default: 100.200.2.0/24
+    Description: IP Range for private subnet1
+    Type: String
+
+  DatabaseInstanceIdentifier:
+    Description: Instance identifier name
+    Default: mysqldb
+    Type: String
+
+  DatabaseName:   
+    Description: MySQL database name
+    Default: TestDB
+    Type: String
+
+  DatabaseUser:    
+    Description: Username for MySQL database access
+    NoEcho: true
+    Default: admin
+    Type: String
+
+  DatabasePassword:    
+    Description: Password for MySQL database access 
+    Default: admtestDB
+    Type: String
+
+  DatabaseBackupRetentionPeriod:
+    ConstraintDescription: Database backup period must be between 0 and 5 days
+    Default: 0
+    Description: The number of days for which automatic DB snapshots are retained
+    MaxValue: 5
+    MinValue: 0
+    Type: Number
+
+  DatabaseAllocatedStorage:
+    ConstraintDescription: Must be between 5 and 1024Gb
+    Default: 20
+    Description: The size of the database (Gb)
+    MaxValue: 65536
+    MinValue: 5
+    Type: Number
+
+  DatabaseInstanceClass:
+    ConstraintDescription: Must select a valid database instance type
+    Default: db.t2.micro
+    Description: The database instance type
+    Type: String
+
+  MultiAZDatabase:
+    ConstraintDescription: Must be either true or false
+    Default: false
+    Description: Creates a Multi-AZ MySQL Amazon RDS database instance
+    Type: String
+
+Resources:   
+  #Public Subnet
+  PrivateSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties: 
+      AvailabilityZone: !Select [ 1, !GetAZs '' ]
+      CidrBlock: !Ref PrivateSubnet2CIDR
+      MapPublicIpOnLaunch: false
+      Tags: 
+        - Key: Name
+          Value: PvtSub2VPCMiniB
+      VpcId: 
+        Fn::ImportValue: !Sub ${ExportVPCB}-VPCID
+
+  DatabaseSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: Subnet group for RDS database
+      SubnetIds: 
+        - Fn::ImportValue: !Sub ${ExportVPCB}-SubnetID
+        - !Ref PrivateSubnet2
+      Tags:
+        - Key: Name
+          Value: database subnets
+
+  DatabaseInstance:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      AllocatedStorage: !Ref DatabaseAllocatedStorage
+      AvailabilityZone: !Select [ 2, !GetAZs  '' ]
+      BackupRetentionPeriod: !Ref DatabaseBackupRetentionPeriod
+      DBInstanceClass: !Ref DatabaseInstanceClass
+      DBInstanceIdentifier: !Ref DatabaseInstanceIdentifier
+      DBName: !Ref DatabaseName
+      DBSubnetGroupName: !Ref DatabaseSubnetGroup
+      Engine: MySQL
+      EngineVersion: 8.0.33
+      MasterUsername: !Ref DatabaseUser
+      MasterUserPassword: !Ref DatabasePassword
+      MultiAZ: !Ref MultiAZDatabase
+      VPCSecurityGroups: 
+        - !Ref DataBaseSecurityGroup
+
+ 
+# Create Security Group for the DataBase
+  DataBaseSecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: Open database for access
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: '3306'
+          ToPort: '3306'
+      Tags:
+        - Key: Name
+          Value: DataBase Security Group
+      VpcId: 
+        Fn::ImportValue: !Sub ${ExportVPCB}-VPCID
