@@ -22,7 +22,7 @@ Resources:
     Properties:
       AllocationId: !GetAtt ElasticIP.AllocationId      
       SubnetId:
-        Fn::ImportValue: !sub ${ExportVPCA}-PublicSubnetID
+        Fn::ImportValue: !Sub ${ExportVPCA}-PrivateSubnetID       
       Tags: 
         - Key: Name
           Value: NATGW
@@ -32,6 +32,7 @@ Resources:
     Properties:
       DestinationCidrBlock: 0.0.0.0/0 
       NatGatewayId: !Ref NATGatewayPublic
-      RouteTableId: !sub ${ExportVPCB}-PrivateRouteTable
+      RouteTableId: 
+        Fn::ImportValue: !Sub ${ExportVPCA}-PrivateRouteTable
 
 
